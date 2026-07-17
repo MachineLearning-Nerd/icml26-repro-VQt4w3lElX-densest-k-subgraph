@@ -1,0 +1,1833 @@
+On Densest k-Subgraph Mining and Diagonal Loading:
+Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+Qiheng Lu 1 Nicholas D. Sidiropoulos 1 Aritra Konar 2
+
+arXiv:2410.07388v4 [cs.SI] 30 Jan 2026
+
+Abstract
+
+flow (Goldberg, 1984), and an efficient 2-approximation
+via greedy peeling (Charikar, 2000). Recently, significant
+progress has been achieved via multi-stage extensions of
+greedy peeling (Boob et al., 2020; Chekuri et al., 2022) or
+advanced convex optimization techniques (Danisch et al.,
+2017; Harb et al., 2022; 2023; Nguyen & Ene, 2024).
+
+The Densest k-Subgraph (DkS) is a fundamental
+combinatorial problem known for its theoretical
+hardness and breadth of applications. Recently,
+Lu et al. (AAAI 2025) introduced a penalty-based
+non-convex relaxation that achieves promising
+empirical performance; however, a rigorous theoretical understanding of its success remains unclear. In this work, we bridge this gap by providing a comprehensive theoretical analysis. We first
+establish the tightness of the relaxation, ensuring
+that the global maximum values of the original
+combinatorial problem and the relaxed problem
+coincide. Then we reveal the benign geometry of
+the optimization landscape by proving a strict dichotomy of stationary points: all integral stationary points are local maximizers, whereas all nonintegral stationary points are strict saddles with
+explicit positive curvature. We propose a saddleescaping Frank–Wolfe algorithm and prove that
+it achieves exact convergence to an integral local
+maximizer in a finite number of steps.
+
+However, it has been observed that DSG algorithms tend to
+extract large and sparsely connected subgraphs in practice
+(Tsourakakis et al., 2013). This is because the average
+degree metric is inherently biased towards larger subgraphs:
+for any subgraph of size k, its average degree is bounded
+above by k − 1. This bias makes DSG algorithms often
+overlook smaller, highly cohesive structures (e.g., small
+cliques) in favor of larger, sparser subgraphs.
+These limitations can be addressed by considering the Densest k-Subgraph (DkS) problem (Feige et al., 2001), which
+explicitly seeks a subgraph of size exactly k with maximum
+density. Other variants of cardinality-constrained dense
+subgraph problems have also been explored, such as the
+Densest at-least-k Subgraph (DalkS) problem and the Densest at-most-k Subgraph (DamkS) problem (Andersen &
+Chellapilla, 2009; Khuller & Saha, 2009). However, in contrast to DkS, such variants cannot explore dense subgraphs
+across the full range of discrete sizes k. Moreover, DalkS
+often exhibits the same bias as DSG, potentially yielding
+subgraphs that significantly exceed the threshold k.
+
+1. Introduction
+Extracting densely connected vertex subsets in large graphs
+is a fundamental task in graph mining (see recent survey
+(Lanciano et al., 2024) and references therein), with applications ranging from social media analysis (Dourisboure
+et al., 2007; Angel et al., 2014) and computational biology
+(Fratkin et al., 2006; Saha et al., 2010), to financial fraud
+detection (Hooi et al., 2016; Chen & Tsourakakis, 2022).
+
+Imposing the cardinality constraint renders DkS NP-hard
+(Feige et al., 2001). Moreover, DkS is known to be difficult to approximate (Khot, 2006; Manurangsi, 2017; Jones
+et al., 2023) and the best known polynomial-time algorithm
+achieves only an O(n1/4+ϵ ) approximation ratio in time
+nO(1/ϵ) for every ϵ > 0 (Bhaskara et al., 2010).
+To circumvent these barriers, significant efforts have turned
+to relaxation techniques. However, theoretical frameworks
+ranging from hierarchical semidefinite programming (SDP)
+relaxations (Bhaskara et al., 2012) to quasi-polynomial
+schemes (Barman, 2018) to convex relaxations based on
+matrix lifting (Ames, 2015; Bombina & Ames, 2020) typically incur prohibitive computational costs. This stems
+from the quadratic expansion in the number of variables in
+matrix lifting and the cubic complexity of Singular Value
+
+A classic and widely employed formulation is the Densest
+Subgraph (DSG) problem (Goldberg, 1984), which finds the
+subgraph that maximizes the average induced degree. DSG
+admits an exact polynomial-time solution via maximum
+1
+University of Virginia 2 KU Leuven.
+Correspondence to: Qiheng Lu <luqh@virginia.edu>, Nicholas D.
+Sidiropoulos <nikos@virginia.edu>, Aritra Konar <aritra.konar@kuleuven.be>.
+
+Preprint. February 3, 2026.
+
+1
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+dependent penalty parameter λ ≥ −λmin (A) is needed
+for exactness, where λmin (A) is the smallest eigenvalue of
+the adjacency matrix. By leveraging an extension of the
+classic Motzkin-Straus theorem (Motzkin & Straus, 1965),
+they established the surprising result that the small graphindependent value of λ = 1 is both necessary and sufficient
+to guarantee a tight relaxation when the subgraph size k is
+smaller than the maximum clique size ω(G). They also empirically validated that λ = 1 results in a benign non-convex
+optimization landscape, thereby enabling gradient-based
+methods to find high-quality solutions for DkS. In particular, Lu et al. (2025) demonstrated that selecting λ = 1 and
+solving the relaxation via the Frank–Wolfe algorithm (Frank
+& Wolfe, 1956; Jaggi, 2013; Braun et al., 2022) effectively
+balances the quality of the solution and the convergence
+speed compared to both larger and smaller values of λ. Furthermore, their algorithm also exhibited state-of-the-art performance in terms of obtaining high-quality solutions for
+DkS while being scalable to large datasets.
+
+Decomposition (SVD).
+To approximate DkS, Papailiopoulos et al. (2014) proposed
+the Spannogram framework, which exhibits polynomialtime solvability for constant-rank adjacency matrices. However, its complexity scales exponentially with the rank (e.g.,
+O(n3 ) for rank-2), limiting its scalability on large graphs.
+Alternatively, Yuan & Zhang (2013) leverage the Truncated
+Power Method (TPM) to tackle DkS. While TPM provides
+convergence guarantees under specific conditions, its effectiveness is often compromised by a tendency to converge to
+sub-optimal results (Papailiopoulos et al., 2014).
+More recently, gradient-based algorithms for tackling continuous relaxations of DkS have been proposed. Hager
+et al. (2016) introduced a pair of algorithms for solving a
+relaxation based on sparse Principal Component Analysis
+(PCA), while Sotirov (2020) applied coordinate descent on
+a continuous relaxation of DkS, obtained by relaxing the
+feasible set to its convex hull. Konar & Sidiropoulos (2021)
+convexify the objective function through the Lovász extension and relax the feasible set to its convex hull, leveraging
+the Alternating Direction Method of Multipliers (ADMM)
+to solve the resulting formulation. However, none of the
+aforementioned works (Hager et al., 2016; Sotirov, 2020;
+Konar & Sidiropoulos, 2021) provide a theoretical characterization of the integrality gap. This lack of analysis makes
+it difficult to assess the tightness of the proposed relaxations
+or to determine the extent of the gap when the relaxations
+are not exact.
+
+Despite these successes, the framework proposed by Lu
+et al. (2025) leaves several important theoretical questions
+unresolved:
+• Tightness Analysis: The current guarantee for a tight
+relaxation is limited to subgraph sizes k ≤ ω(G), which
+is generally a small interval for real graphs. For larger
+subgraph sizes k > ω(G), it remains unclear whether their
+relaxation preserves tightness when λ = 1.
+• Landscape Analysis: While λ = 1 is empirically observed to be effective in finding high-quality solutions for
+DkS, a rigorous characterization of the optimization landscape, which can help explain these successes, is lacking.
+
+Recently, Liu et al. (2024; 2025) proposed two penaltybased exact non-convex, continuous relaxations of DkS and
+leveraged gradient-based algorithms embedded within a
+homotopy-based framework to solve them. However, the
+exactness guarantees of these formulations rely on conservative sufficient conditions on the penalty parameter
+λ.
+√
+For instance, Liu et al. (2025) requires λ = Ω( n∥A∥2 )
+(n is the number of vertices and A is the adjacency matrix) to ensure tightness, while Liu et al. (2024) requires
+λ = Ω(∥A∥2 ). Without investigating the problem’s intrinsic geometric properties, such parameter choices may result
+in challenging optimization landscapes for gradient-based
+algorithms. Consequently, their empirical performance can
+be sensitive to homotopy-related hyperparameters, occasionally requiring dataset-specific configurations to consistently
+obtain high-quality solutions. In addition, none of (Liu et al.,
+2024; 2025) characterize the stationary points of their relaxed problems, which hinders the development of more
+principled algorithmic designs.
+
+• Convergence Analysis of Frank–Wolfe: We also observe that their algorithm always converges to an integral
+stationary point, thereby eliminating the need for any postprocessing rounding procedure. Currently, there is no theoretical explanation for such behavior.
+Contributions: We resolve these open questions regarding
+the framework of Lu et al. (2025), improving the understanding of its effectiveness for DkS. Our main contributions are
+summarized as follows:
+• Tightness Analysis: We prove that the relaxation is tight
+for arbitrary subgraph sizes k provided that the penalty
+parameter λ ≥ 1 (Theorem 2.3). This result affirmatively
+answers the open question regarding tightness in the regime
+k > ω(G), extending the validity of the relaxation to general
+subgraph mining scenarios.
+
+Closest to our present work, Lu et al. (2025) proposed
+a non-convex continuous relaxation of DkS based on a
+quadratic penalty formulation, and investigated the role of
+the penalty parameter λ in guaranteeing an exact relaxation
+of DkS. Conventional wisdom suggests that a large, graph-
+
+• Landscape Analysis: We present the first rigorous geometric characterization of the relaxation in Lu et al. (2025),
+clarifying its effectiveness for DkS. Specifically, we prove
+a strict dichotomy of the set of stationary points: all inte-
+
+2
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+gral stationary points are local maximizers (Theorem 3.7),
+whereas all non-integral stationary points are strict saddle
+points when λ > 1 is non-integral (Theorem 3.10). Furthermore, by establishing the monotonicity of the set of local
+maximizers with respect to λ (Theorem 3.2), we offer a theoretical insight for the empirical observation that relatively
+smaller λ yields better solution quality.
+
+or equivalently, if any global maximizer of (2) remains
+optimal for (3). Regarding tightness, we first review the
+main theoretical result in (Lu et al., 2025).
+Theorem 2.1 (Corollary of Theorem 2 in (Lu et al., 2025)).
+If λ < 1, the relaxation from (2) to (3) is not tight for a
+given subgraph size k < ω(G), where ω(G) is the maximum
+clique size of G.
+
+• Convergence Analysis: We resolve the theoretical mystery of why Frank–Wolfe yields integral solutions without
+rounding. We propose a saddle-escaping variant of Frank–
+Wolfe that leverages explicit strict ascent directions to escape saddle points, in contrast to existing techniques such
+as random perturbation (surveyed in Section 6). We prove
+that our algorithm escapes non-integral saddle points and
+achieves finite-step exact convergence to an integral local
+maximizer, thereby explaining the algorithm’s natural convergence to integral solutions without rounding.
+
+Theorem 2.1 shows that selecting the penalty parameter
+λ ≥ 1 is a necessary condition for the general tightness
+of the relaxation from (2) to (3). We now prove that this
+condition is also sufficient for every subgraph size k.
+Theorem 2.2 (Lemma 5.1 in (Barman, 2018)). If λ = 2,
+the relaxation from (2) to (3) is tight for any k.
+Theorem 2.3 (Extension of Lemma 5.1 in (Barman, 2018)).
+If λ ≥ 1, the relaxation from (2) to (3) is tight for any k.
+Proof. Please refer to Appendix A.
+
+2. Problem Formulation and Tightness
+Analysis
+
+Remark 2.4. Theorem 2.3 guarantees that for λ ≥ 1, the optimal objective values of the relaxation (3) and the original
+problem (2) coincide. However, this does not imply that the
+sets of optimal solutions are identical. Specifically, when
+λ = 1, the relaxed problem (3) may admit non-integral
+global maximizers in addition to the binary optimal solutions of (2). Choosing λ > 1 is sufficient to ensure that
+the sets of optimal solutions are the same because ∥x∥22 is
+maximized over the feasible set of (3) if and only if x is
+integral.
+
+Consider an unweighted, undirected, and simple (no selfloops or multiple edges) graph G := (V, E) with n vertices
+and m edges, where V := {1, 2, . . . , n} is the vertex set and
+E is the edge set. DkS can be formulated as the following
+binary quadratic maximization problem
+max
+
+x∈{0,1}n
+
+s.t.
+
+1
+f (x) = xT Ax
+2
+X
+xi = k,
+
+(1)
+
+Theorem 2.3 establishes the tightness of the relaxation (3)
+for any k when λ ≥ 1. However, since the optimization
+problem (3) is non-convex in general, gradient-based algorithms may get trapped at stationary points, depending on
+the optimization landscape. Therefore, guaranteeing tightness alone is insufficient to explain the empirical successes
+observed by Lu et al. (2025). In the next section, we analyze
+the influence of λ on the optimization landscape of (3).
+
+i∈[n]
+
+where A is the symmetric n × n adjacency matrix of G and
+x is a binary indicator vector.
+By leveraging diagonal loading, Lu et al. (2025) equivalently
+recast (1) into
+max n
+
+x∈{0,1}
+
+s.t.
+
+1
+g(x) = xT (A + λI)x
+2
+X
+xi = k,
+
+3. Analyzing the Optimization Landscape
+
+(2)
+
+In this section, we analyze the geometry of the relaxation
+(3) to characterize its evolution as a function of λ and reveal
+a benign optimization landscape, despite non-convexity, for
+small λ > 1.
+
+i∈[n]
+
+where λ > 0 is a penalty parameter. Relaxing the feasible
+set of (2) to its convex hull yields the following continuous
+formulation:
+max
+
+x∈[0,1]n
+
+s.t.
+
+1
+g(x) = xT (A + λI)x
+2
+X
+xi = k.
+
+3.1. Monotonicity of Local Maximizers
+We begin with the local maximizers of (3), for which we
+prove the following pair of results.
+
+(3)
+
+Lemma 3.1. If λ > 1, then all local maximizers of (3) are
+integral.
+
+i∈[n]
+
+Similar to (Lu et al., 2025), we say that the relaxation from
+(2) to (3) is tight if their global maximum values coincide,
+
+Proof. Please refer to Appendix B.
+3
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+Qualification (LCQ), the Karush–Kuhn–Tucker (KKT) conditions also equivalently characterize the stationary points
+of (3). Using these conditions, we provide an explicit characterization of the stationary points.
+Theorem 3.4 (Necessary and Sufficient Conditions for Stationarity). x is a stationary point of (3) if and only if there
+exists a scalar µ such that vi ≤ µ for every i ∈ S0 , vi ≥ µ
+for every i ∈ S1 , and vi = µ for every i ∈ Sf .
+
+Figure 1. Visual representation of the main results in Section 3.
+Yellow rectangle: set of all feasible points Ckn of (3). Orange set
+A: subset of all integral points of (3). Purple set B: subset of all
+stationary points of (3). Theorem 3.7: A ∩ B is the set of all local
+maximizers of (3) when λ > 1 is non-integral. Theorem 3.10:
+B \ A is the set of all strict saddle points of (3) when λ > 1 is
+non-integral.
+
+Proof. Please refer to Appendix D.
+As a corollary of Theorem 3.4, we obtain the following
+characterization of the integral stationary points of (3).
+
+Theorem 3.2 (Monotonicity of Local Maximizers). If λ2 >
+λ1 > 1 and x is a local maximizer of (3) with the penalty
+parameter λ1 , then x is also a local maximizer of (3) with
+the penalty parameter λ2 .
+
+Corollary 3.5. An integral point x is a stationary point of
+(3) if and only if maxi∈S0 vi ≤ mini∈S1 vi .
+Intuitively, the condition in Corollary 3.5 implies that for an
+integral stationary point, the marginal gain (gradient) of any
+vertex selected in the size-k subgraph must be no less than
+that of any unselected vertex.
+
+Proof. Please refer to Appendix C.
+Theorem 3.2 demonstrates that for a given λ > 1, the set
+of local maximizers of (3) is contained within that of a
+larger λ. We conclude that increasing λ can only proliferate,
+but never remove local maximizers, thereby resulting in a
+more complicated optimization landscape. This suggests
+that choosing a smaller value of λ in (3) results in a more
+“friendly” optimization landscape for gradient-based algorithms, provided that λ > 1. Additionally, it also provides a
+theoretical insight for the empirical observation in (Lu et al.,
+2025) that increasing λ often results in Frank–Wolfe getting
+trapped in low-quality integral solutions corresponding to
+sparsely connected subgraphs.
+
+Next, inspired by the work of Hager & Krylyuk (1999) on
+graph partitioning, we establish a link between the sets of
+local maximizers (Lemma 3.1) and the integral stationary
+points of (3) (Corollary 3.5). To this end, the following
+stepping-stone result is key, as it establishes the necessary
+and sufficient conditions for characterizing local optimality.
+Theorem 3.6 (Necessary and Sufficient Conditions for Local Optimality). When λ > 1, x is a local maximizer of (3)
+if and only if x is integral and maxi∈S0 vi < mini∈S1 vi .
+Proof. Please refer to Appendix E.
+
+3.2. Characterization of Stationary Points
+Using the above conditions, we arrive at our first major
+result of this subsection.
+
+In this subsection, we rigorously characterize the stationary
+points of (3), which is crucial for unveiling the underlying
+benign nature of the optimization landscape.
+
+Theorem 3.7. All integral stationary points of (3) are local
+maximizers when λ > 1 is non-integral.
+
+To facilitate our analysis, we first introduce necessary notation. Let v(x) := ∇g(x) = (A +λI)x denote the gradient
+vector. For any x that is a feasible point of (3), we partition the index set [n] := {1, 2, . . . , n} into three disjoint
+sets: S0 (x) := {i ∈ [n] | xi = 0}, Sf (x) := {i ∈ [n] |
+0 < xi < 1}, and S1 (x) := {i ∈ [n] | xi = 1}. For
+brevity, we will omit the argument x (e.g., writing Sf instead of Sf (x)) when the context is clear. Additionally, we
+let L := ∥A+λI∥2 denote the spectral norm of the Hessian,
+which serves as the Lipschitz constant of the gradient v(x).
+
+Proof. By Corollary 3.5 and Theorem 3.6, we know that
+an integral stationary point is not a local maximizer if and
+only if maxi∈S0 vi = mini∈S1 vi . Since λ is non-integral,
+mini∈S1 vi is also non-integral and therefore cannot equal
+the integer maxi∈S0 vi .
+Remark 3.8. Lemma 3.1 and Theorem 3.7 establish a significant algorithmic implication: provided we have an algorithm that converges to a stationary point, certifying local
+optimality takes only O(n) time via an integrality check.
+
+Definition 3.3 (Stationary Point). x is a stationary point of
+(3) if the following first-order condition holds: v(x)T (y −
+x) ≤ 0 for every y feasible for (3).
+
+Having fully characterized the integral stationary points,
+we now proceed to analyze the non-integral ones. We first
+introduce the definition of a strict saddle point.
+
+Since the constraints of (3) satisfy the Linearity Constraint
+4
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+Algorithm 1 Saddle-Escaping Frank–Wolfe for (3)
+
+Definition 3.9 (Strict Saddle Point). A stationary point x is
+a strict saddle point of (3) if the following first and secondorder conditions hold: there exists a feasible y for (3) such
+that ∇g(x)T (y −x) = 0 and (y −x)T ∇2 g(x)(y −x) > 0.
+
+Require: The adjacency matrix A, the subgraph size k,
+and the non-integral penalty parameter λ > 1. Let x(0)
+be a feasible initialization.
+1: L ← ∥A + λI∥2
+2: t ← 0
+3: while the Frank–Wolfe gap is not zero do
+4:
+v (t) ← (A + λI)x(t)
+5:
+s(t) ← 0
+6:
+s(t) [topk (v (t) )] ← 1
+(t)
+7:
+d(t) ← s(t) −
+n x (t) T (t) o
+(t)
+8:
+γ ← min 1, (vL∥d)(t)d∥2
+2
+9:
+if the Frank–Wolfe gap is smaller than the threshold
+discussed in Remark 4.11, and either s(t) is not a
+local maximizer, or s(t) is a local maximizer but
+x(t) is not within the neighborhood of s(t) derived
+in Theorem 4.1 then
+10:
+Let j, l be indices of the k-th and (k + 1)-th largest
+elements of x(t) .
+(t)
+(t)
+11:
+if vj ≥ vl then
+12:
+δ (t) ← min{xl , 1 − xj }
+13:
+x(t+1) ← x(t) + δ (t) (ej − el )
+14:
+else
+15:
+δ (t) ← min{xj , 1 − xl }
+16:
+x(t+1) ← x(t) + δ (t) (el − ej )
+17:
+end if
+18:
+else
+19:
+x(t+1) ← x(t) + γ (t) d(t)
+20:
+end if
+21:
+t←t+1
+22: end while
+
+With this definition in hand, we arrive at our second major
+result of this subsection.
+Theorem 3.10. All non-integral stationary points of (3) are
+strict saddle points when λ > 1.
+Proof. Please refer to Appendix F.
+Collectively, Theorems 3.7 and 3.10 establish a strict dichotomy in the optimization landscape: when λ > 1 is
+non-integral, every stationary point is either an integral local
+maximizer or a non-integral strict saddle point with explicit
+positive curvature. This confirms the benign landscape of
+(3), serving as a vital theoretical foundation for the design
+of effective algorithms.
+
+4. Saddle-Escaping Frank–Wolfe: Algorithm
+and Convergence Analysis
+Motivated by the benign landscape of (3), we propose the
+Saddle-Escaping Frank–Wolfe (SE-FW) algorithm in this
+section. The core idea is to augment the classic Frank–Wolfe
+method (Frank & Wolfe, 1956; Jaggi, 2013) with an escape
+step that is triggered specifically in the neighborhood of
+saddle points. The literature related to saddle point escape
+is reviewed in Section 6.
+Roadmap of Section 4: We first prove finite-step exact
+convergence once the iterate enters the basin of an integral
+local maximizer (Theorem 4.1). We then show that both
+standard Frank–Wolfe steps (Theorem 4.12) and escape
+steps (Corollary 4.9) strictly increase the objective. Based
+on these results, we bound the total number of escape steps
+(Corollary 4.13). Finally, leveraging the convergence guarantee of the standard Frank–Wolfe steps (Theorem 4.12),
+we obtain a finite-step exact convergence result.
+
+the gradient of g(xt ) (Line 4), followed by computing the
+solution of the linear maximization oracle (LMO)
+s(t) ∈ arg maxn (v (t) )⊤ s,
+s∈Ck
+
+(4)
+
+The SE-FW algorithm (Algorithm 1) is designed to identify
+integral local maximizers with finite-step exact convergence.
+Unlike many existing non-convex solvers that rely on random perturbations to escape saddle points (Ge et al., 2015;
+Jin et al., 2017; Lu et al., 2020), SE-FW exploits the explicit
+positive curvature of the landscape to construct deterministic directions of strict ascent. The algorithm operates via a
+hybrid strategy, alternating between standard Frank–Wolfe
+updates (Lines 4–8 and 19) and specific operations to escape
+strict saddle points (Lines 9–17).
+
+where Ckn denotes the constraint set of (3). (4) has a closedform solution (Lines 5–6), which in turn yields the ascent
+direction d(t) (Line 7). The adaptive step-size rule is specified in Line 8 (Bertsekas, 2016, p. 268). The saddle escaping
+criterion (Line 9) is designed to detect when the algorithm
+stagnates in the neighborhood of saddle points. Specifically,
+the escape step is triggered only when the Frank–Wolfe gap
+is smaller than a threshold and x(t) is not within the basin
+of attraction of a local maximizer, which can be certified in
+O(m+n) time following Theorem 3.6. A more detailed discussion of this criterion can be found in Remark 4.11. The
+algorithm terminates when the Frank–Wolfe gap is zero, implying exact convergence to a stationary point (specifically,
+a local maximizer due to the saddle escaping mechanism).
+
+The standard Frank–Wolfe updates consist of computing
+
+A key computational advantage of SE-FW is its low per-
+
+4.1. Algorithm Description
+
+5
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+xj } > 0 and the ascent direction d = ej − el . Then, the
+ascent
+
+iteration cost, dominated by sparse matrix-vector multiplication (SpMV) in Lines 4 and 9, and linear-time selection
+operations (via Quickselect) in Lines 6 and 10. Thus, the
+total complexity per iteration is O(m + n), which is highly
+efficient for large-scale problems.
+
+g(x + δd) − g(x) ≥ (λ − 1)δ 2 > 0.
+
+(5)
+
+The result shows that for any strict saddle point, there exists
+a direction d which guarantees strict ascent. Hence, if we
+can compute such directions, they can be used for escape.
+However, in order to demonstrate sufficient ascent, the dependence of the lower in bound (5) on the term δ needs
+further clarification. Consequently, our analysis focuses
+on identifying distinct indices j and l that provide a lower
+bound on min{xj , 1 − xj , xl , 1 − xl }, which in turn yields
+a lower bound for δ.
+
+4.2. Finite-Step Local Convergence
+We first consider the algorithm’s behavior in the neighborhood of local maximizers.
+Theorem 4.1. Let x be a local maximizer of (3) with a
+non-integral λ > 1, and let σx = mini∈S1 (x) vi (x) −
+maxi∈S0 (x) vi (x) > 0 denote the gradient gap at x. If the
+σx
+iterate x(t) satisfies ∥x(t) − x∥2 ≤ 4L
+, then the algorithm
+converges exactly to the local maximizer in the next step,
+i.e., x(t+1) = x.
+
+Theorem 4.5. Let x be a strict saddle point of (3) with
+a non-integral λ > 1, and let y be any integral feasible
+point of (3) closest to x (in the Euclidean norm). Then
+there exist two distinct indices j and l such that min{xj , 1−
+ξy
+xj , xl , 1−xl } ≥ 2(λ+1)n
+, where ξy = | mini∈S1 (y) vi (y)−
+maxi∈S0 (y) vi (y)|.
+
+Proof. Please refer to Appendix G.
+Remark 4.2. The
+convergence
+relies on the adaptive
+n exact
+o
+(v (t) )T d(t)
+step size min 1, L∥d(t) ∥2 (Bertsekas, 2016, p. 268). As
+2
+
+∥d(t) ∥2 → 0, the quadratic denominator allows the step size
+to reach 1.
+n In contrast,
+oanother well-known adaptive step
+(v (t) )T d(t)
+size min 1, 2kL
+(Lacoste-Julien, 2016) vanishes
+asymptotically due to the constant denominator, preventing
+the algorithm from exact convergence.
+
+Proof. Please refer to Appendix H.
+Remark 4.6. Through the proof of Theorem 4.5 in Appendix H, by Lemma H.1, we know that the indices j ∈
+arg mini∈S1 (y)∩Sf (x) xi and l ∈ arg maxi∈S0 (y)∩Sf (x) xi
+correspond to the k-th largest element x(k) and the (k + 1)th largest element x(k+1) , respectively. The average time
+complexity for finding the k-th largest element x(k) and the
+(k + 1)-th largest element x(k+1) is O(n) via Quickselect.
+
+Corollary 4.3. When 1 < λ < 2, the gradient gap admits
+a uniform lower bound σx ≥ λ − 1. This implies that λ−1
+4L
+serves as a uniform lower bound for the radius of the basin
+of attraction, independent of the specific local maximizer.
+
+Theorem 4.5 provides a lower bound on min{xj , 1 −
+xj , xl , 1 − xl }. We note that the bound is order-wise tight in
+the worst case. Please refer to Appendix I for more details.
+
+In summary, these results guarantee finite-step convergence
+once the iterate enters the basin of attraction of a local
+maximizer. The remaining challenge lies in ensuring that
+the algorithm can effectively escape strict saddle points to
+reach these attractive regions, which is the focus of the next
+subsection.
+
+Substituting the result of Theorem 4.5 in (5), we obtain the
+desired sufficient ascent result.
+Corollary 4.7. Each escape at a saddle point x increases
+(λ−1)ξ 2
+
+the objective value at least 4(λ+1)2 yn2 , where y is any integral feasible point of (3) closest to x (in the Euclidean
+norm) and ξy = | mini∈S1 (y) vi (y) − maxi∈S0 (y) vi (y)|.
+
+4.3. Escaping Saddle Points: Ascent Analysis
+Suppose that the iterate x(t) reaches a strict saddle point.
+Without additional intervention, the standard Frank–Wolfe
+algorithm would terminate at this point. Hence, we propose
+additional “escape steps” which exploit the positive curvature at x(t) to construct directions of strict ascent to enable
+the algorithm to escape such points.
+
+While Corollary 4.7 guarantees ascent from exact saddle
+points, practical implementations rarely land precisely on
+such points. Instead, the algorithm operates within a neighborhood of saddle points. Motivated by such an observation,
+we now extend our analysis to bound the objective improvement when escaping from these approximate saddle points.
+
+To this end, quantifying the ascent of (3) per escape step is
+crucial. Since strict saddle points are non-integral (Theorem 3.10), the following corollary of Theorem 2.3 applies.
+
+Lemma 4.8. Let x, y ∈ Rn , and let x(i) and y(i) denote
+the i-th largest elements of x and y, respectively. If ∥x −
+y∥∞ ≤ ϵ, then |x(i) − y(i) | ≤ ϵ for every i ∈ [n].
+
+Corollary 4.4. Let x be a strict saddle point of (3) with a
+non-integral λ > 1. There exist two distinct non-integral
+entries xj and xl such that vj ≥ vl . Let δ = min{xl , 1 −
+
+Proof. Please refer to Appendix J.
+6
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+ξ
+
+y
+Corollary 4.9. If the iterate x(t) lies in the 4(λ+1)n
+neighborhood of a strict saddle point x with respect to
+the ℓ∞ norm, where y is any integral feasible point
+of (3) closest to x (in the Euclidean norm) and ξy =
+| mini∈S1 (y) vi (y) − maxi∈S0 (y) vi (y)|, then selecting the
+k-th and (k + 1)-th largest elements of x(t) still guarantees an increase in the objective value Ω(1/n2 ) when
+λ − 1 = Θ(1) and 2 − λ = Θ(1).
+
+Proof. Please refer to Appendix L.
+By combining the strict monotonicity ensured by Theorem 4.12 for standard Frank–Wolfe steps with the Ω(1/n2 )
+objective increase guaranteed by Corollary 4.9 for escape
+steps, together with the O(k 2 ) upper bound on the objective
+value, we obtain an upper bound on the number of escapes.
+Corollary 4.13. The number of saddle escapes is at most
+O(k 2 n2 ) when λ − 1 = Θ(1) and 2 − λ = Θ(1).
+
+Corollary 4.9 establishes a theoretical guarantee for objective ascent within a neighborhood of a saddle point. However, the condition relies on the distance of x(t) to the saddle
+point, which is unknown during the algorithm’s execution.
+To make this result operationally useful, we need a computable surrogate to gauge proximity to the saddle point. To
+this end, we employ the Frank–Wolfe gap, a standard metric
+that is readily available at each iteration.
+Theorem 4.10. For the optimization problem (3), there exist
+two scalars τ > 0 and θ > 0 such thatp
+for any feasible point
+x, if G(x) ≤ θ, then ∥x − y∥∞ ≤ τ G(x), where G(x)
+is the Frank–Wolfe gap at x and y is any stationary point
+closest to x (in the Euclidean norm).
+
+Synthesizing the finite-step local convergence, the strict
+monotonicity in objective value, the convergence rate of
+Frank–Wolfe, and the bound on the number of escape steps,
+we establish that Algorithm 1 converges exactly to an integral local maximizer in a finite number of total iterations.
+
+5. Numerical Experiments
+In this section, we provide empirical evidence to corroborate our theoretical analysis. Our experiments are explicitly
+designed to verify two critical properties of the proposed algorithm: finite-step exact convergence and saddle escaping
+capability. In our experiments, we set the penalty parameter
+λ = 1.5 and the initialization point x(0) = nk 1.
+
+Proof. Please refer to Appendix K.
+Remark 4.11. τ and θ are scalars that depend only on
+the structure of the optimization problem (3). To guarantee that x(t) lies in the neighborhood mentioned in Corol(t)
+lary n
+4.9, we require that
+o the Frank-Wolfe gap G(x ) ≤
+
+5.1. Verification of Finite-Step Convergence
+We evaluate SE-FW on the SNAP Facebook dataset (n =
+4, 039, m = 88, 234) (Leskovec & Krevl, 2014) with a
+subgraph size
+oWe compare our step-size rule
+n of k(t)=T 20.
+(v ) d(t)
+(t)
+γ = min 1, L∥d(t) ∥2 (Bertsekas, 2016, p. 268) with
+2
+n
+o
+(t) T (t)
+) d
+another adaptive step-size rule γ (t) = min 1, (v 2kL
+(Lacoste-Julien, 2016).
+
+ξ2
+
+min 16(λ+1)y 2 τ 2 n2 , θ . Since the exact values of these two
+scalars are generally unknown, explicitly calculating the
+threshold for the Frank–Wolfe gap is infeasible. To address this, we employ an adaptive strategy. Specifically, if
+the objective gain from an escape step does not meet the
+theoretical bound in Corollary 4.9, we reduce the trigger
+threshold by a factor β ∈ (0, 1) to enforce stricter proximity.
+
+Figure 2 corroborates our theoretical analysis. The baseline
+(orange) exhibits the expected sublinear asymptotic convergence, while our SE-FW (blue) demonstrates a faster
+convergence followed by a “final jump”, where the Frank–
+Wolfe gap drops to zero and the integrality attains one. This
+behavior empirically validates Theorem 4.1 and confirms
+the prediction in Remark 4.2 that the adaptive step-size rule
+proposed by Lacoste-Julien (2016) is too conservative to
+achieve finite-step exact convergence.
+
+4.4. Global Convergence Analysis
+Having established the ascent guarantee during the saddle
+escape step, we now turn to the global convergence analysis
+of the proposed algorithm.
+Theorem 4.12. Let {x(t) } be the sequence generated by
+Algorithm 1 with no saddle point escape step triggered, then
+the objective values {g(x(t) )} are strictly monotonically
+increasing until a stationary point is reached, and the minimum Frank-Wolfe gap G̃T = min0≤t≤T G(x(t) ) satisfies:
+( 2h
+0
+if G̃T > 2kL,
+T +1
+G̃T ≤ q 4h0 kL
+(6)
+if G̃T ≤ 2kL.
+T +1
+
+5.2. Verification of Saddle Escaping Capability
+Since every point that is not a local maximizer has a strictly
+ascent direction, Frank–Wolfe rarely gets stuck in the neighborhood of a saddle point in practice. To verify the saddle
+escaping capability, we employ a synthetic dataset: a random 10-regular graph with 100 vertices generated by the
+Python package NetworkX (Steger & Wormald, 1999; Kim
+& Vu, 2003) and the subgraph size k = 20.
+
+where h0P= maxx∈Ckn g(x) − g(x(0) ) and Ckn = {y ∈
+[0, 1]n | i∈[n] yi = k}. This implies a convergence rate
+√
+of O(1/ t) to a stationary point.
+
+For a regular graph, the uniform initialization is a stationary
+7
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+(a) Frank–Wolfe Gap
+
+(b) Integrality
+
+(c) Objective Value
+
+Figure 2. Finite-Step Exact Convergence on the Facebook Dataset. Comparison between our step-size rule (blue) and the step-size
+rule proposed by Lacoste-Julien (2016) (orange). (a): The Frank–Wolfe gap is defined as G(x) := maxs∈Ckn ⟨∇g(x), s − x⟩, where
+P
+Ckn = {y ∈ [0, 1]n | i∈[n] yi = k}. This metric characterizes the proximity to stationarity, vanishing if and only if x is a stationary
+point. (b): The integrality is defined as ∥x∥22 /k. This metric characterizes the proximity to integrality, attaining one if and only if x is an
+integral point. (c): The objective value of g(x).
+
+(a) Frank–Wolfe Gap
+
+(b) Integrality
+
+(c) Objective Value
+
+Figure 3. Saddle Escaping on a Synthetic Regular Graph.
+
+point (as shown in Figure 3(a), where the Frank–Wolfe gap
+is exactly zero). Consequently, the standard Frank–Wolfe
+algorithm terminates at this point. With our saddle escaping
+mechanism, we observe a sharp ascent at the beginning in
+Figure 3(c), and the algorithm eventually converges exactly
+to an integral local maximizer.
+
+programming problem, which is hard to do. In addition,
+Lu et al. (2020); Nouiehed & Razaviyayn (2020) also introduced perturbation-based algorithms for linearly constrained
+problems. Our proposed SE-FW leverages explicit positive
+curvature to escape saddle points and exactly converges to
+a local maximizer within finite steps rather than the asymptotic convergence achieved by all the aforementioned works.
+
+6. Related Work
+7. Conclusion
+
+Saddle Escaping: Escaping saddle points has been extensively studied in non-convex optimization. For unconstrained problems, Lee et al. (2016) applied the stable manifold theorem to prove that gradient descent almost surely
+converges to a local maximizer. Ge et al. (2015); Jin et al.
+(2017) proposed random perturbation-based approaches to
+escape saddle points. The framework proposed by Ge et al.
+(2015) can also be extended to handle equality-constrained
+problems. Note that our relaxed DkS problem includes inequality constraints. To address more general constrained
+problems, Mokhtari et al. (2018) proposed a framework for
+general convex sets. However, applying their framework
+to our relaxed DkS problem requires repeatedly approximating the solution of a generally non-convex quadratic
+
+In this work, we provide a comprehensive theoretical analysis of the diagonal loading-based non-convex relaxation
+for the Densest k-Subgraph problem, effectively bridging
+the gap between its empirical success and theoretical understanding. We establish the tightness of the relaxation and
+reveal a strict dichotomy in the optimization landscape: all
+integral stationary points are local maximizers, while all nonintegral ones are strict saddle points with explicit positive
+curvature. Leveraging this benign geometry, we propose the
+Saddle-Escaping Frank–Wolfe algorithm, which guarantees
+a finite-step exact convergence to a local maximizer. Our
+experimental results further verify our theoretical findings.
+
+8
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+Impact Statement
+
+Charikar, M. Greedy approximation algorithms for finding
+dense components in a graph. In Proceedings of the
+International Workshop on Approximation Algorithms for
+Combinatorial Optimization, pp. 84–95, 2000.
+
+This paper presents work whose goal is to advance the field
+of machine learning. There are many potential societal
+consequences of our work, none of which we feel must be
+specifically highlighted here.
+
+Chekuri, C., Quanrud, K., and Torres, M. R. Densest subgraph: Supermodularity, iterative peeling, and flow. In
+Proceedings of the 2022 Annual ACM-SIAM Symposium
+on Discrete Algorithms, pp. 1531–1555, 2022.
+
+References
+Ames, B. P. Guaranteed recovery of planted cliques and
+dense subgraphs by convex relaxation. Journal of Optimization Theory and Applications, 167(2):653–675,
+2015.
+
+Chen, T. and Tsourakakis, C. AntiBenford subgraphs: Unsupervised anomaly detection in financial networks. In
+Proceedings of the 28th ACM SIGKDD Conference on
+Knowledge Discovery and Data Mining, pp. 2762–2770,
+2022.
+
+Andersen, R. and Chellapilla, K. Finding dense subgraphs
+with size bounds. In Proceedings of the International
+Workshop on Algorithms and Models for the Web-Graph,
+pp. 25–37, 2009.
+
+Danisch, M., Chan, T.-H. H., and Sozio, M. Large scale
+density-friendly graph decomposition via convex programming. In Proceedings of the 26th International Conference on World Wide Web, pp. 233–242, 2017.
+
+Angel, A., Koudas, N., Sarkas, N., Srivastava, D., Svendsen,
+M., and Tirthapura, S. Dense subgraph maintenance
+under streaming edge weight updates for real-time story
+identification. The VLDB Journal, 23(2):175–199, 2014.
+
+Dourisboure, Y., Geraci, F., and Pellegrini, M. Extraction and classification of dense communities in the web.
+In Proceedings of the 16th International Conference on
+World Wide Web, pp. 461–470, 2007.
+
+Barman, S. Approximating Nash equilibria and dense subgraphs via an approximate version of Carathéodory’s
+theorem. SIAM Journal on Computing, 47(3):960–981,
+2018.
+
+Feige, U., Kortsarz, G., and Peleg, D. The dense k-subgraph
+problem. Algorithmica, 29(3):410–421, 2001.
+Frank, M. and Wolfe, P. An algorithm for quadratic programming. Naval Research Logistics Quarterly, 3(1-2):
+95–110, 1956.
+
+Bertsekas, D. Nonlinear Programming. Athena Scientific,
+3rd edition, 2016.
+
+Fratkin, E., Naughton, B. T., Brutlag, D. L., and Batzoglou,
+S. Motifcut: regulatory motifs finding with maximum
+density subgraphs. Bioinformatics, 22(14):e150–e157,
+2006.
+
+Bhaskara, A., Charikar, M., Chlamtac, E., Feige, U., and
+Vijayaraghavan, A. Detecting high log-densities: an
+O(n1/4 ) approximation for densest k-subgraph. In Proceedings of the Forty-Second ACM Symposium on Theory
+of Computing, pp. 201–210, 2010.
+
+Ge, R., Huang, F., Jin, C., and Yuan, Y. Escaping from
+saddle points — online stochastic gradient for tensor
+decomposition. In Proceedings of The 28th Conference
+on Learning Theory, volume 40, pp. 797–842, 2015.
+
+Bhaskara, A., Charikar, M., Guruswami, V., Vijayaraghavan,
+A., and Zhou, Y. Polynomial integrality gaps for strong
+sdp relaxations of densest k-subgraph. In Proceedings
+of the Twenty-Third Annual ACM-SIAM Symposium on
+Discrete Algorithms, pp. 388–405, 2012.
+
+Goldberg, A. V. Finding a maximum density subgraph.
+Technical report, 1984.
+
+Bombina, P. and Ames, B. Convex optimization for the
+densest subgraph and densest submatrix problems. SN
+Operations Research Forum, 1(3):23, 2020.
+
+Hager, W. W. and Krylyuk, Y. Graph partitioning and continuous quadratic programming. SIAM Journal on Discrete
+Mathematics, 12(4):500–523, 1999.
+
+Boob, D., Gao, Y., Peng, R., Sawlani, S., Tsourakakis, C.,
+Wang, D., and Wang, J. Flowless: Extracting densest
+subgraphs without flow computations. In Proceedings of
+The Web Conference 2020, pp. 573–583, 2020.
+
+Hager, W. W., Phan, D. T., and Zhu, J. Projection algorithms for nonconvex minimization with application to
+sparse principal component analysis. Journal of Global
+Optimization, 65(4):657–676, 2016.
+
+Braun, G., Carderera, A., Combettes, C. W., Hassani, H.,
+Karbasi, A., Mokhtari, A., and Pokutta, S. Conditional
+gradient methods. arXiv preprint arXiv:2211.14103,
+2022.
+
+Harb, E., Quanrud, K., and Chekuri, C. Faster and scalable algorithms for densest subgraph and decomposition.
+In Advances in Neural Information Processing Systems,
+volume 35, pp. 26966–26979, 2022.
+9
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+Harb, E., Quanrud, K., and Chekuri, C. Convergence to
+lexicographically optimal base in a (contra) polymatroid
+and applications to densest subgraph and tree packing. In
+Proceedings of the 31st Annual European Symposium on
+Algorithms, volume 274, pp. 56, 2023.
+
+Leskovec, J. and Krevl, A. SNAP Datasets: Stanford large network dataset collection. http://snap.
+stanford.edu/data, June 2014.
+Liu, Y., Liu, J., and Ma, W.-K. Cardinality-constrained
+binary quadratic optimization via extreme point pursuit,
+with application to the densest k-subgraph problem. In
+Proceedings of 2024 IEEE International Conference on
+Acoustics, Speech and Signal Processing, pp. 9631–9635,
+2024.
+
+Hooi, B., Song, H. A., Beutel, A., Shah, N., Shin, K., and
+Faloutsos, C. Fraudar: Bounding graph fraud in the face
+of camouflage. In Proceedings of the 22nd ACM SIGKDD
+International Conference on Knowledge Discovery and
+Data Mining, pp. 895–904, 2016.
+
+Liu, Y., Liu, J., Ma, W.-K., and Konar, A. A scalable and
+exact relaxation for densest k-subgraph via error bounds.
+arXiv preprint arXiv:2511.11451, 2025.
+
+Jaggi, M. Revisiting Frank–Wolfe: Projection-free sparse
+convex optimization. In Proceedings of the 30th International Conference on Machine Learning, pp. 427–435,
+2013.
+
+Lu, Q., Sidiropoulos, N. D., and Konar, A. Densest ksubgraph mining via a provably tight relaxation. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 39, pp. 12291–12299, 2025.
+
+Jin, C., Ge, R., Netrapalli, P., Kakade, S. M., and Jordan,
+M. I. How to escape saddle points efficiently. In Proceedings of the 34th International Conference on Machine
+Learning, volume 70, pp. 1724–1732, 2017.
+
+Lu, S., Razaviyayn, M., Yang, B., Huang, K., and Hong,
+M. Finding second-order stationary points efficiently
+in smooth nonconvex linearly constrained optimization
+problems. Advances in Neural Information Processing
+Systems, 33:2811–2822, 2020.
+
+Jones, C., Potechin, A., Rajendran, G., and Xu, J. Sum-ofsquares lower bounds for densest k-subgraph. In Proceedings of the 55th Annual ACM Symposium on Theory of
+Computing, pp. 84–95, 2023.
+
+Luo, Z.-Q. and Tseng, P. Error bound and convergence
+analysis of matrix splitting algorithms for the affine variational inequality problem. SIAM Journal on Optimization,
+2(1):43–54, 1992.
+
+Khot, S. Ruling out ptas for graph min-bisection, dense
+k-subgraph, and bipartite clique. SIAM Journal on Computing, 36(4):1025–1071, 2006.
+
+Manurangsi, P. Almost-polynomial ratio eth-hardness of
+approximating densest k-subgraph. In Proceedings of
+the 49th Annual ACM SIGACT Symposium on Theory of
+Computing, pp. 954–961, 2017.
+
+Khuller, S. and Saha, B. On finding dense subgraphs. In Proceedings of the International Colloquium on Automata,
+Languages, and Programming, pp. 597–608, 2009.
+Kim, J. H. and Vu, V. H. Generating random regular graphs.
+In Proceedings of the thirty-fifth annual ACM symposium
+on Theory of computing, pp. 213–222, 2003.
+
+Mokhtari, A., Ozdaglar, A., and Jadbabaie, A. Escaping
+saddle points in constrained optimization. Advances in
+Neural Information Processing Systems, 31:3633–3643,
+2018.
+
+Konar, A. and Sidiropoulos, N. D. Exploring the subgraph
+density-size trade-off via the Lovász extension. In Proceedings of the 14th ACM International Conference on
+Web Search and Data Mining, pp. 743–751, 2021.
+
+Motzkin, T. S. and Straus, E. G. Maxima for graphs and a
+new proof of a theorem of Turán. Canadian Journal of
+Mathematics, 17:533–540, 1965.
+
+Lacoste-Julien, S. Convergence rate of Frank-Wolfe for
+non-convex objectives. arXiv preprint arXiv:1607.00345,
+2016.
+
+Nguyen, T. D. and Ene, A. Multiplicative weights update,
+area convexity and random coordinate descent for densest
+subgraph problems. In Proceedings of the 41st International Conference on Machine Learning, volume 235, pp.
+37683–37706, 2024.
+
+Lanciano, T., Miyauchi, A., Fazzone, A., and Bonchi, F. A
+survey on the densest subgraph problem and its variants.
+ACM Computing Surveys, 56(8):1–40, 2024.
+
+Nouiehed, M. and Razaviyayn, M. A trust region method for
+finding second-order stationarity in linearly constrained
+nonconvex optimization. SIAM Journal on Optimization,
+30(3):2501–2529, 2020.
+
+Lee, J. D., Simchowitz, M., Jordan, M. I., and Recht, B.
+Gradient descent only converges to minimizers. In Proceedings of the 29th Annual Conference on Learning
+Theory, volume 49, pp. 1246–1257, 2016.
+
+Papailiopoulos, D., Mitliagkas, I., Dimakis, A., and Caramanis, C. Finding dense subgraphs via low-rank bilinear
+10
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+optimization. In Proceedings of the 31st International
+Conference on Machine Learning, volume 32, pp. 1890–
+1898, 2014.
+Saha, B., Hoch, A., Khuller, S., Raschid, L., and Zhang,
+X.-N. Dense subgraphs with restrictions and applications
+to gene annotation graphs. In Proceedings of the 14th
+Annual International Conference on Research in Computational Molecular Biology, pp. 456–472, 2010.
+Sotirov, R. On solving the densest k-subgraph problem on
+large graphs. Optimization Methods and Software, 35(6):
+1160–1178, 2020.
+Steger, A. and Wormald, N. C. Generating random regular
+graphs quickly. Combinatorics, Probability and Computing, 8(4):377–396, 1999.
+Tsourakakis, C., Bonchi, F., Gionis, A., Gullo, F., and
+Tsiarli, M. Denser than the densest subgraph: extracting
+optimal quasi-cliques with quality guarantees. In Proceedings of the 19th ACM SIGKDD International Conference
+on Knowledge Discovery and Data Mining, pp. 104–112,
+2013.
+Yuan, X.-T. and Zhang, T. Truncated power method for
+sparse eigenvalue problems. Journal of Machine Learning Research, 14(28):899–925, 2013.
+
+11
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+A. Proof of Theorem 2.3
+Proof. Suppose that x is a non-integral feasible point of (3). Let M(x) = {i ∈ [n] | 0 < xi < 1}. The set M(x) denotes
+the indices of all entries in x that are not integral. Since the cardinality of M(x) is either 0 or strictly greater than 1, for
+any non-integral
+feasible x, we can always find two distinct vertices i, j ∈ M(x) such that λxi + si ≥ λxj + sj , where
+P
+si = (i,l)∈E xl , ∀i ∈ [n].
+Let δ = min{xj , 1 − xi } and d = ei − ej , where ei is the i-th vector of the canonical basis for Rn , and x̂ = x + δd.
+Clearly, x̂ is still feasible. Next, we consider the difference between g(x̂) and g(x) when λ ≥ 1:
+
+g(x̂) − g(x)
+λ
+λ
+(xi + δ)2 + (xj − δ)(sj − aij xi ) + (xj − δ)2 + aij (xi + δ)(xj − δ)
+2
+2
+λ 2
+λ 2
+− xi (si − aij xj ) − xi − xj (sj − aij xi ) − xj − aij xi xj
+2
+2
+=δ(λxi + si − λxj − sj ) + (λ − aij )δ 2
+=(xi + δ)(si − aij xj ) +
+
+(7)
+
+≥0.
+
+Hence, the objective function value g(x̂) is greater than or equal to the objective function value g(x) and the cardinality of
+M(x̂) is strictly smaller than the cardinality of M(x). Repeat this update until the cardinality of M(x) reduces to 0, and
+we obtain an integral feasible x′ of (3) such that g(x′ ) ≥ g(x), which implies that there exists an integral feasible point that
+is optimal for (3).
+
+B. Proof of Lemma 3.1
+Proof. Suppose that x is a non-integral feasible point of (3). Let M(x) = {i ∈ [n] | 0 < xi < 1}. The set M(x) denotes
+the indices of all entries in x that are not integers. Since the cardinality of M(x) is either 0 or strictly greater than 1, for
+any non-integral
+feasible x, we can always find two distinct vertices i, j ∈ M(x) such that λxi + si ≥ λxj + sj , where
+P
+si = (i,l)∈E xl , ∀i ∈ [n].
+Let δ̂ = min{xj , 1 − xi } and d = ei − ej , where ei is the i-th vector of the canonical basis for Rn . Clearly, d is a feasible
+direction at x. Next, we consider the difference between g(x + δd) and g(x) when λ > 1 for every δ ∈ (0, δ̂]:
+g(x + δd) − g(x)
+λ
+λ
+(xi + δ)2 + (xj − δ)(sj − aij xi ) + (xj − δ)2 + aij (xi + δ)(xj − δ)
+2
+2
+λ 2
+λ 2
+− xi (si − aij xj ) − xi − xj (sj − aij xi ) − xj − aij xi xj
+2
+2
+=δ(λxi + si − λxj − sj ) + (λ − aij )δ 2
+=(xi + δ)(si − aij xj ) +
+
+(8)
+
+>0.
+
+Therefore, d = ei − ej is a feasible strictly ascent direction at x, which implies that x is not a local maximizer of (3).
+
+C. Proof of Theorem 3.2
+T
+Proof. Since x is a local maximizer of (3) with the penalty parameter λ1 , there exists ϵ > 0, such that
+P x (A + λ1 I)x ≥
+T
+n
+n
+n
+y (A + λ1 I)y for every y ∈ Cϵ , where Cϵ = {y ∈ Ck | ∥x − y∥2 ≤ ϵ} and Ck = {y ∈ [0, 1] | i∈[n] yi = k}. Now,
+we only need to show that xT (A + λ2 I)x ≥ y T (A + λ2 I)y for every y ∈ Cϵ . From Lemma 3.1, we know that x is
+
+12
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+integral, which implies that
+xT (A + λ2 I)x − y T (A + λ2 I)y
+=xT (A + λ1 I)x + (λ2 − λ1 )∥x∥22 − y T (A + λ1 I)y
+− (λ2 − λ1 )∥y∥22
+
+(9)
+
+≥(λ2 − λ1 )(∥x∥22 − ∥y∥22 )
+≥0,
+where the last inequality holds because ∥z∥22 is maximized over the feasible set of (3) when z is integral.
+Therefore, x is also a local maximizer of (3) with the penalty parameter λ2 .
+
+D. Proof of Theorem 3.4
+Proof. The Lagrangian function of (3) can be expressed as
+
+L(x, µ, α, β) =g(x) − µ 
+
+
+X
+
+xi − k 
+
+i∈[n]
+
++
+
+X
+
+αi xi −
+
+i∈[n]
+
+The KKT conditions are
+
+X
+
+(10)
+βi (xi − 1).
+
+i∈[n]
+
+
+
+vi = µ − α i + β i ,
+
+
+
+
+
+αi ≥ 0,
+βi ≥ 0,
+
+
+
+αi xi = 0,
+
+
+
+β (x − 1) = 0,
+i i
+
+(11)
+
+for every i ∈ [n], which is equivalent to vi ≤ µ for every i ∈ S0 , vi ≥ µ for every i ∈ S1 , and vi = µ for every i ∈ Sf .
+
+E. Proof of Theorem 3.6
+Proof. (⇒) First, we prove that if x is a local maximizer of (3), then x is integral and maxi∈S0 vi < mini∈S1 vi .
+By Lemma 3.1 and Corollary 3.5, we know that x is integral and maxi∈S0 vi ≤ mini∈S1 vi , so we only need to show that
+maxi∈S0 vi ̸= mini∈S1 vi .
+Suppose that there exist i ∈ S0 and j ∈ S1 such that vi = vj . Let d = ei − ej where ei is the i-th vector of the canonical
+basis for Rn . For δ ∈ (0, 1], the exact second-order Taylor expansion at x is
+1
+g(x + δd) − g(x) = δv T d + δ 2 dT (A + λI)d
+2
+= (vi − vj )δ + (λ − aij )δ 2
+
+(12)
+
+> 0,
+which contradicts the local optimality of x.
+Hence, x is a local maximizer of (3) when λ > 1 implies that x is integral and maxi∈S0 vi < mini∈S1 vi .
+(⇐) Then, we prove that if x is integral and maxi∈S0 vi < mini∈S1 vi , then x is a local maximizer of (3).
+Since maxi∈S0 vi < mini∈S1 vi , there exists a scalar µ such that maxi∈S0 vi < µ < mini∈S1 vi . Let σi = |vi − µ| for
+every i ∈ [n], and σmin = mini∈[n] σi .
+Let a nonzero vector d be a direction for which x + d remains feasible
+P for (2). Since x is integral and x + d is feasible for
+(2), we have di ≥ 0 for every i ∈ S0 , di ≤ 0 for every i ∈ S1 , and i∈[n] di = 0.
+13
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+The exact second-order Taylor expansion at x is
+1
+g(x + d) − g(x) = v T d + dT (A + λI)d
+2
+X
+1
+vi di + dT (A + λI)d.
+=
+2
+
+(13)
+
+i∈[n]
+
+For the first-order term in (13), we have
+X
+
+vi di =
+
+i∈[n]
+
+X
+
+(vi − µ)di
+
+i∈[n]
+
+=
+
+X
+
+(vi − µ)di +
+
+i∈S0
+
+=−
+
+X
+
+X
+
+(vi − µ)di
+(14)
+
+i∈S1
+
+|vi − µ||di | −
+
+X
+
+|vi − µ||di |
+
+i∈S1
+
+i∈S0
+
+≤ −σmin ∥d∥2
+where the first equality is due to
+
+P
+
+i∈[n] di = 0 and the last inequality is due to ∥d∥2 ≤ ∥d∥1 .
+
+For the second-order term in (13), we have
+dT (A + λI)d ≤ L∥d∥22 .
+
+(15)
+
+Therefore, for every nonzero d such that ∥d∥2 < 2σLmin , we have
+g(x + d) − g(x) ≤ −σmin ∥d∥2 +
+
+L
+∥d∥22 < 0,
+2
+
+(16)
+
+which implies that x is a local maximizer.
+
+F. Proof of Theorem 3.10
+Proof. Suppose that x is a non-integral stationary point of (3). Since x is non-integral, there exist two distinct indices
+i, j ∈ Sf . Let d = ei − ej where ei is the i-th vector of the canonical basis for Rn . Since i, j ∈ Sf , d is clearly a feasible
+direction at x.
+Since x is a stationary point, by Theorem 3.4, we have vi = vj , which implies that
+v T d = vi − vj = 0.
+
+(17)
+
+dT (A + λI)d = 2(λ − aij ) > 0.
+
+(18)
+
+Since λ > 1, we also have
+
+Therefore, we can conclude that x is a strict saddle point.
+
+G. Proof of Theorem 4.1
+G.1. Supporting Lemma
+Lemma G.1. Let x be a local maximizer of (3) with a non-integral λ > 1, and let σx = mini∈S1 (x) vi (x) −
+σx
+maxi∈S0 (x) vi (x) > 0 denote the gradient gap at x. For any feasible point y of (3), if ∥x − y∥2 < 2L
+, then x is
+the unique solution to the LMO (4) with respect to the gradient v(y).
+Proof. By the norm inequality and the L-smoothness condition, we have
+∥v(x) − v(y)∥∞ ≤ ∥v(x) − v(y)∥2 ≤ L∥x − y∥2 <
+14
+
+σx
+,
+2
+
+(19)
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+which implies that
+
+σx
+,
+2
+σx
+max vi (y) < max vi (x) +
+.
+2
+i∈S0 (x)
+i∈S0 (x)
+min vi (y) > min vi (x) −
+
+i∈S1 (x)
+
+i∈S1 (x)
+
+(20)
+
+Since mini∈S1 (x) vi (x) − maxi∈S0 (x) vi (x) = σx , we have
+min vi (y) > max vi (y),
+
+i∈S1 (x)
+
+(21)
+
+i∈S0 (x)
+
+which implies that S1 (x) is the unique set of indices of the largest k values of v(y).
+G.2. Proof of Theorem 4.1
+σx
+σx
+Proof. Since ∥x(t) − x∥2 ≤ 4L
+< 2L
+, by Lemma G.1, we have s(t) = x, which implies that d(t) = x − x(t) . Hence, we
+(t) T (t)
+only need to show that (v(x )) d ≥ L∥d(t) ∥22 . For the left-hand side (LHS), we have
+
+(v(x(t) ))T d(t) = (x(t) )T (A + λI)d(t)
+= (x − d(t) )T (A + λI)d(t)
+
+(22)
+
+= xT (A + λI)d(t) − (d(t) )T (A + λI)d(t)
+≥ (v(x))T d(t) − L∥d(t) ∥22 ,
+which implies that we only need to show that (v(x))T d(t) ≥ 2L∥d(t) ∥22 .
+(t)
+
+(t)
+
+Since x is integral, we have di ≤ 0 for every i ∈ S0 (x) and di ≥ 0 for every i ∈ S1 (x). Let ρ = maxi∈S0 (x) vi (x) +
+σx
+σx
+2 = mini∈S1 (x) vi (x) − 2 , we have
+(v(x))T d(t) =
+
+X
+
+(t)
+
+(vi (x) − ρ)di
+
+i∈[n]
+
+=
+
+X
+
+(t)
+
+i∈S0 (x)
+
+=
+
+X
+
+X
+
+(vi (x) − ρ)di +
+
+(t)
+
+(vi (x) − ρ)di
+
+i∈S1 (x)
+(t)
+|vi (x) − ρ||di | +
+
+i∈S0 (x)
+
+X
+
+(23)
+(t)
+
+|vi (x) − ρ||di |
+
+i∈S1 (x)
+
+σx (t)
+≥
+∥d ∥2 ,
+2
+where the first equality is due to
+
+P
+
+(t)
+(t)
+(t)
+i∈[n] di = 0 and the last inequality is due to ∥d ∥1 ≥ ∥d ∥2 .
+
+σx
+, we have (v(x))T d(t) ≥ σ2x ∥d(t) ∥2 ≥ 2L∥d(t) ∥22 .
+Finally, because ∥d(t) ∥2 = ∥x(t) − x∥2 ≤ 4L
+
+H. Proof of Theorem 4.5
+H.1. Supporting Lemma
+Lemma H.1. Let x be a non-integral feasible point of (3), and let y be any integral feasible point of (3) closest to x (in the
+Euclidean norm). Then the following properties hold:
+1. yi = xi for every i ∈ S0 (x) ∪ S1 (x).
+2. For any i ∈ S1 (y) and j ∈ S0 (y), we have xi ≥ xj .
+P
+Proof. We first consider the first property. Suppose that there exists i ∈ S0 (x) such that yi = 1. Since i∈[n] xi =
+P
+P
+i∈[n] yi = k, we have
+j̸=i (xj − yj ) = 1, which implies that there exists j ̸= i such that yj = 0 and xj > 0. Let zi = 0,
+15
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+zj = 1, and zl = yl for every l ̸∈ {i, j}, then we have ∥y − x∥22 − ∥z − x∥22 = 2xj > 0, which contradicts the assumption
+that y is the integral feasible point closest to x.
+P
+P
+P
+Similarly, suppose that there exists i ∈ S1 (x) such that yi = 0. Since i∈[n] xi = i∈[n] yi = k, we have j̸=i (yj −xj ) =
+1 which implies that there exists j ̸= i such that yj = 1 and xj < 1. Let zi = 1, zj = 0, and zl = yl for every l ̸∈ {i, j},
+then we have ∥y − x∥22 − ∥z − x∥22 = 2(1 − xj ) > 0, which contradicts the assumption that y is the integral feasible point
+closest to x.
+Therefore, we can conclude that yi = xi for every i ∈ S0 (x) ∪ S1 (x).
+Next, we consider the second property. Suppose that there exist i ∈ S1 (y) and j ∈ S0 (y) such that xi < xj . Let zi = 0,
+zj = 1, and zl = yl for every l ̸∈ {i, j}, then we have ∥y − x∥22 − ∥z − x∥22 = 2(xj − xi ) > 0, which contradicts the
+assumption that y is the integral feasible point closest to x.
+H.2. Proof of Theorem 4.5
+P
+P
+Proof. By the first property in Lemma H.1, we know that 1 ≤ i∈Sf (x) xi = i∈Sf (x) yi < |Sf (x)|, which implies that
+S1 (y)∩Sf (x) and S0 (y)∩Sf (x) are non-empty sets because of the pigeonhole principle. Let j ∈ arg mini∈S1 (y)∩Sf (x) xi
+and l ∈ arg maxi∈S0 (y)∩Sf (x) xi . By the second property in Lemma H.1, we know that xj ≥ xl , so we only need to derive
+a lower bound for min{xl , 1 − xj }.
+P
+P
+Since i∈[n] xi = i∈[n] yi = k, we have
+X
+
+M=
+
+X
+
+(1 − xi ) =
+
+xi ,
+
+(24)
+
+i∈S0 (y)∩Sf (x)
+
+i∈S1 (y)∩Sf (x)
+
+where M is a positive scalar. By the definitions of xj and xl , we have
+M
+M
+≥
+,
+|S1 (y) ∩ Sf (x)|
+n
+M
+M
+xl ≥
+≥
+.
+|S0 (y) ∩ Sf (x)|
+n
+
+1 − xj ≥
+
+(25)
+
+Hence, we only need to derive a lower bound for M . Next, we will consider the following two cases separately to derive this
+lower bound: when y is a stationary point and when it is not.
+If y is a stationary point (which implies that y is an integral local maximizer by Theorem 3.7), then ξy = mini∈S1 (y) vi (y)−
+maxi∈S0 (y) vi (y) > 0. Let z = y − x, by Theorem 3.4 and the definition of M , we have
+ξy ≤ vj (y) − vl (y)
+= vj (y) − vl (y) + vl (x) − vj (x)
+= [vj (y) − vj (x)] − [vl (y) − vl (x)]
+= (ej − el )T (A + λI)z
+X
+= λ(zj − zl ) +
+i∈S1 (y)∩Sf (x)
+
+|aji − ali ||1 − xi | +
+
+i∈S1 (y)∩Sf (x)
+
+X
+
+≤ 2λM +
+
+i∈S1 (y)∩Sf (x)
+
+(1 − xi ) +
+
+(aji − ali )zi
+(26)
+
+i∈S0 (y)∩Sf (x)
+
+X
+
+≤ λ((1 − xj ) + xl ) +
+
+X
+
+(aji − ali )zi +
+
+X
+
+|aji − ali || − xi |
+
+i∈S0 (y)∩Sf (x)
+
+X
+
+xi
+
+i∈S0 (y)∩Sf (x)
+
+= 2(λ + 1)M,
+ξ
+
+y
+which implies that M ≥ 2(λ+1)
+.
+
+If y is not a stationary point, then there exist p ∈ S0 (y) and q ∈ S1 (y) such that ξy = vp (y) − vq (y) > 0. By the
+second property in Lemma H.1, we have xp ≤ xq . Specifically, this covers three possible scenarios: 0 < xp ≤ xq < 1,
+16
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+xp < xq = 1, and xq > xp = 0. In all such cases, it follows from Theorem 3.4 that vp (x) ≤ vq (x). Let z = y − x, by the
+definition of M , we have
+ξy = vp (y) − vq (y)
+≤ vp (y) − vq (y) + vq (x) − vp (x)
+= [vp (y) − vp (x)] − [vq (y) − vq (x)]
+= (ep − eq )T (A + λI)z
+X
+= λ(zp − zq ) +
+i∈S1 (y)∩Sf (x)
+
+(api − aqi )zi
+
+|api − aqi ||1 − xi | +
+
+i∈S1 (y)∩Sf (x)
+
+X
+
+≤
+
+(1 − xi ) +
+
+i∈S1 (y)∩Sf (x)
+
+(27)
+
+i∈S0 (y)∩Sf (x)
+
+X
+
+≤ λ(−xp − (1 − xq )) +
+
+X
+
+(api − aqi )zi +
+
+X
+
+|api − aqi || − xi |
+
+i∈S0 (y)∩Sf (x)
+
+X
+
+xi
+
+i∈S0 (y)∩Sf (x)
+
+= 2M,
+ξ
+
+which implies that M ≥ 2y .
+ξ
+
+y
+Therefore, we can conclude that min{xl , 1 − xj } ≥ 2(λ+1)n
+.
+
+I. Discussion on the Order-wise Tightness of Theorem 4.5
+Remark I.1. When 1 < λ < 2, we have the lower bound ξy ≥ min{λ − 1, 2 − λ}. By choosing the penalty parameter
+λ such that λ − 1 = Θ(1) and 2 − λ = Θ(1) (e.g., λ = 1.5), min{x(k+1) , 1 − x(k) } is lower-bounded by Ω(1/n). The
+order of this bound cannot be improved in general. Consider a graph instance constructed by a clique of size k − 1 and
+an independent set of size n − k + 1, where every node in the (k − 1)-clique is fully connected to every node in the
+1
+1
+independent set. We can easily verify that x = [1, . . . , 1, n−k+1
+, . . . , n−k+1
+]T is a stationary point of this instance. Since
+| {z } |
+{z
+}
+k−1
+
+n−k+1
+
+min{xi , 1 − xi , xj , 1 − xj } = O(1/n) for every pair of distinct indices i and j when n − k = Θ(n), we can confirm that
+the lower bound obtained in Theorem 4.5 is order-wise tight.
+
+J. Proof of Lemma 4.8
+Proof. In order to prove |x(i) − y(i) | ≤ ϵ, we only need to prove y(i) − ϵ ≤ x(i) ≤ y(i) + ϵ for every i ∈ [n].
+We first prove that x(i) ≤ y(i) + ϵ for every i ∈ [n]. Suppose that there exists i ∈ [n] such that x(i) > y(i) + ϵ. Let
+S = {j ∈ [n] | xj ≥ x(i) }, we have |S| ≥ i and xj ≥ x(i) > y(i) + ϵ for every j ∈ S. Since ∥x − y∥∞ ≤ ϵ, we have
+yj + ϵ ≥ xj ≥ x(i) > y(i) + ϵ for every j ∈ S. Since |S| ≥ i, there exist at least i elements in y that are strictly greater
+than y(i) , which contradicts the definition of y(i) .
+Similarly, by symmetry, we can prove y(i) ≤ x(i) + ϵ for every i ∈ [n].
+Therefore, we can conclude that |x(i) − y(i) | ≤ ϵ for every i ∈ [n].
+
+K. Proof of Theorem 4.10
+Proof. Let Ckn = {x ∈ [0, 1]n |
+of a point y onto Ckn as
+
+P
+
+i∈[n] xi = k} denote the constraint set of problem (3), and define the Euclidean projection
+
+1
+ΠCkn (y) = arg minn ∥x − y∥22
+x∈Ck 2
+
+(28)
+
+Furthermore, let R(x) := x − ΠCkn (x + ∇g(x)) denote the residual of the projected gradient at x ∈ Ckn .
+p
+We first prove that ∥R(x)∥2 ≤ G(x). By the property of Euclidean projection, we have
+⟨x + ∇g(x) − ΠCkn (x + ∇g(x)), z − ΠCkn (x + ∇g(x))⟩ ≤ 0,
+17
+
+(29)
+
+On Densest k-Subgraph Mining and Diagonal Loading: Optimization Landscape and Finite-Step Exact Convergence Analysis
+
+for every z ∈ Ckn . Substituting z = x, we have
+⟨x + ∇g(x) − ΠCkn (x + ∇g(x)), x − ΠCkn (x + ∇g(x))⟩ ≤ 0.
+
+(30)
+
+∥x − ΠCkn (x + ∇g(x))∥22 ≤ ⟨∇g(x), ΠCkn (x + ∇g(x)) − x⟩.
+
+(31)
+
+On re-arranging, we obtain
+
+Observe that the LHS of the above inequality is precisely ∥R(x)∥22 . Since the definition of Frank–Wolfe gap is G(x) =
+maxs∈Ckn ⟨∇g(x), s − x⟩, we have
+⟨∇g(x), ΠCkn (x + ∇g(x)) − x⟩ ≤ G(x).
+
+(32)
+
+Chaining the final pair of inequalities then yields the desired result ∥R(x)∥22 ≤ G(x) ≤ θ.
+By Theorem 2.3 in (Luo & Tseng, 1992), we have
+∥x − y∥∞ ≤ ∥x − y∥2 ≤ τ ∥x − ΠCkn (x + ∇g(x))∥2 ≤ τ
+
+p
+
+G(x).
+
+(33)
+
+L. Proof of Theorem 4.12
+Proof. By the ascent lemma, we have
+1
+g(x(t+1) ) = g(x(t) + γ (t) d(t) ) ≥ g(x(t) ) + γ (t) (v (t) )T d(t) − (γ (t) )2 L∥d(t) ∥22 .
+2
+
+(34)
+
+By the definition of the Frank–Wolfe gap, we have
+1
+g(x(t+1) ) ≥ g(x(t) ) + γ (t) G(x(t) ) − (γ (t) )2 L∥d(t) ∥22 ,
+2
+
+(35)
+
+where G(x(t) ) is the Frank–Wolfe gap at x(t) .
+(t)
+
+G(x )
+If γ (t) = L∥d
+(t) ∥2 , then we have
+2
+
+1
+G(x(t) )2
+G(x(t) )2
+g(x(t+1) ) − g(x(t) ) ≥ γ (t) G(x(t) ) − (γ (t) )2 L∥d(t) ∥22 =
+≥
+.
+2
+4kL
+2L∥d(t) ∥22
+
+(36)
+
+If γ (t) = 1, which implies that G(x(t) ) ≥ L∥d(t) ∥22 , then we have
+1
+G(x(t) )
+g(x(t+1) ) − g(x(t) ) ≥ G(x(t) ) − L∥d(t) ∥22 ≥
+.
+2
+2
+
+(37)
+
+Hence, we have
+(t+1)
+
+g(x
+
+
+
+(t)
+
+) − g(x ) ≥ min
+
+G(x(t) )2 G(x(t) )
+,
+4kL
+2
+
+
+,
+
+(38)
+
+which implies that the objective values are strictly monotonically increasing until a stationary point is reached and
+)
+(
+2
+G̃
+G̃
+T
+T
+h0 ≥ g(x(T +1) ) − g(x(0) ) ≥ (T + 1) min
+,
+.
+4kL 2
+G̃T
+0
+If G̃T > 2kL, we have h0 ≥ (T +1)
+, which implies that G̃T ≤ T2h+1
+. If G̃T ≤ 2kL, we have h0 ≥
+2
+q
+4h0 kL
+implies that G̃T ≤
+T +1 .
+
+18
+
+(39)
+
+(T +1)G̃2T
+, which
+4kL
+
+

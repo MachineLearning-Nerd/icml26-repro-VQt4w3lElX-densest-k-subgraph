@@ -1,0 +1,39 @@
+{
+  "space_id": "DineshAI/VQt4w3lElX",
+  "emoji": "🧱",
+  "created_at": "2026-07-17T06:30:00+00:00",
+  "paper": {
+    "arxiv_id": "2410.07388",
+    "openreview_id": "VQt4w3lElX"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-VQt4w3lElX"
+  ],
+  "autosync": true,
+  "private": false,
+  "title": "Repro - DkS Penalty Relaxation Landscape",
+  "last_page": "conclusion",
+  "local_dashboards": {},
+  "artifacts_bucket": "DineshAI/VQt4w3lElX-artifacts",
+  "local_path_artifacts": [
+    {
+      "path": "outputs/c2_dichotomy.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-VQt4w3lElX-densest-k-subgraph/outputs/c2_dichotomy.csv",
+      "size": 617634,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/c1_tightness.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-VQt4w3lElX-densest-k-subgraph/outputs/c1_tightness.csv",
+      "size": 13471,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/c3_frankwolfe.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-VQt4w3lElX-densest-k-subgraph/outputs/c3_frankwolfe.csv",
+      "size": 6174,
+      "artifact_type": "dataset"
+    }
+  ]
+}

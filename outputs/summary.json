@@ -1,0 +1,35 @@
+{
+  "paper": "Densest k-Subgraph: penalty relaxation landscape (Lu et al. 2410.07388, VQt4w3lElX)",
+  "claims": {
+    "C1_tightness": {
+      "claim": "C1 tightness (lambda>=1)",
+      "tight_cases_lambda_ge_1": 180,
+      "total_cases_lambda_ge_1": 180,
+      "worst_gap_lambda_ge_1": 0.0,
+      "all_tight": true,
+      "lambda_lt_1_failures_found": 30
+    },
+    "C2_dichotomy": {
+      "claim": "C2 dichotomy (lambda=1.5 non-integral)",
+      "stationary_points": 8605,
+      "integral_local_max": 853,
+      "nonintegral_strict_saddle": 7752,
+      "min_ascent_curvature_at_saddles": 0.625,
+      "all_classified_cleanly": true,
+      "clean_dichotomy": true
+    },
+    "C3_frankwolfe": {
+      "claim": "C3 saddle-escaping Frank-Wolfe",
+      "runs": 144,
+      "reached_integral": 144,
+      "reached_local_max": 144,
+      "max_steps_observed": 202,
+      "always_integral_local_max": true
+    }
+  },
+  "verdict": {
+    "C1_verified": true,
+    "C2_verified": true,
+    "C3_verified": true
+  }
+}
