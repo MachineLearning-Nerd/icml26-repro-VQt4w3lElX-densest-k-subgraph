@@ -11,7 +11,7 @@
     "icml2026-repro",
     "paper-VQt4w3lElX"
   ],
-  "updated_at": "2026-07-23T02:30:00+00:00",
+  "updated_at": "2026-07-23T02:31:00+00:00",
   "root": {
     "slug": "index",
     "title": "Repro - Densest k-Subgraph Penalty Relaxation Landscape",
@@ -82,9 +82,15 @@
         "slug": "claim-4-theorem-5-exact",
         "title": "Claim 4 — Theorem 5 exact landscape monotonicity",
         "path": "pages/claim-4-theorem-5-exact/page.md"
+      },
+      {
+        "slug": "claim-6-cost-source-audit",
+        "title": "Claim 6 — Source-exact Figure 4 cost audit",
+        "file": "pages/claim-6-cost-source-audit/page.md",
+        "children": []
       }
     ]
   },
-  "agent_view_tokens": 3810,
-  "revision": 1784744640000000000
+  "agent_view_tokens": 4810,
+  "revision": 1784744640000000001
 }
