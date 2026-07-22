@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "title": "Repro - Densest k-Subgraph Penalty Relaxation Landscape",
+  "emoji": "🧱",
+  "space_id": "DineshAI/VQt4w3lElX",
+  "paper": {
+    "arxiv_id": "2410.07388",
+    "openreview_id": "VQt4w3lElX"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-VQt4w3lElX"
+  ],
+  "updated_at": "2026-07-23T02:30:00+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - Densest k-Subgraph Penalty Relaxation Landscape",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "claim-1-tightness",
+        "title": "Claim 1 — Tightness",
+        "file": "pages/claim-1-tightness/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-stationary-point-dichotomy",
+        "title": "Claim 2 — Stationary-point dichotomy",
+        "file": "pages/claim-2-stationary-point-dichotomy/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-frank-wolfe-convergence",
+        "title": "Claim 3 — Frank-Wolfe convergence",
+        "file": "pages/claim-3-frank-wolfe-convergence/page.md",
+        "children": []
+      },
+      {
+        "slug": "methods-environment",
+        "title": "Methods & environment",
+        "file": "pages/methods-environment/page.md",
+        "children": []
+      },
+      {
+        "slug": "negative-controls",
+        "title": "Negative controls",
+        "file": "pages/negative-controls/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-motzkin-straus",
+        "title": "Claims — Motzkin-Straus diagonal loading",
+        "file": "pages/claim-motzkin-straus/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-spurious-maxima",
+        "title": "Claim 3 — Thm 5 spurious maxima",
+        "file": "pages/claim-3-spurious-maxima/page.md",
+        "children": []
+      },
+      {
+        "type": "page",
+        "slug": "claim-5-baselines",
+        "title": "Claim 5 — FW vs baselines (LRBO/L-ADMM/EXPP)",
+        "path": "pages/claim-5-baselines/page.md"
+      },
+      {
+        "type": "page",
+        "slug": "claim-1-theorem-2-exact",
+        "title": "Claim 1 — Theorem 2 exact rounding certificate",
+        "path": "pages/claim-1-theorem-2-exact/page.md"
+      }
+    ]
+  },
+  "agent_view_tokens": 2410,
+  "revision": 1784620917512088487
+}
