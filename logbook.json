@@ -11,7 +11,7 @@
     "icml2026-repro",
     "paper-VQt4w3lElX"
   ],
-  "updated_at": "2026-07-23T02:31:00+00:00",
+  "updated_at": "2026-07-23T03:05:00+00:00",
   "root": {
     "slug": "index",
     "title": "Repro - Densest k-Subgraph Penalty Relaxation Landscape",
@@ -88,9 +88,15 @@
         "title": "Claim 6 — Source-exact Figure 4 cost audit",
         "file": "pages/claim-6-cost-source-audit/page.md",
         "children": []
+      },
+      {
+        "slug": "claim-1-theorem-4-exact",
+        "title": "Claim 1 — Exact Theorem 4 and tightness threshold",
+        "file": "pages/claim-1-theorem-4-exact/page.md",
+        "children": []
       }
     ]
   },
   "agent_view_tokens": 4810,
-  "revision": 1784744640000000001
+  "revision": 1784746507727823000
 }

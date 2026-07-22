@@ -1,5 +1,10 @@
 # Diagonal-loaded Motzkin-Straus for densest subgraph
 
+> **Superseded finite check:** this historical page samples small graphs and
+> reports four-decimal numerical agreement. It is not the current certificate
+> for scored Claim 1. See **Claim 1 — Exact Theorem 4 and tightness threshold**
+> for the universal source-locked proof and independent exact audit.
+
 ---
 <!-- trackio-cell
 {"type": "markdown", "id": "cell_mtz_i", "created_at": "2026-07-22T22:00:00+00:00", "title": "Thm 4 value, Cor 1 integrality, Lemma 1 dichotomy, Frank-Wolfe"}

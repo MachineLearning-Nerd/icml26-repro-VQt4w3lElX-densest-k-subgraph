@@ -1,11 +1,11 @@
 # Conclusion
 
-> **Current six-claim record:** at judged revision `c516440`, Claims 1, 2, 3,
-> and 5 are verified, while Claims 4 and 6 are toy. The current candidate
-> preserves the new exact Claim 4 monotonicity certificate and adds a
-> source-exact Claim 6 audit showing that Figure 4 does not support blanket
-> runtime dominance over every named baseline. No score lift is claimed until
-> the live judge evaluates the new HF HEAD. The historical three-claim
+> **Current six-claim record:** at judged revision `358aa350`, Claims 2–5 are
+> verified, while Claims 1 and 6 are toy (10/12). The current candidate adds a
+> source-locked universal Claim 1 certificate for Theorem 4 and the exact
+> minimum `lambda=1` graph-independent tightness threshold. It also preserves
+> the pending source-exact Claim 6 Figure 4 audit. No score lift is claimed
+> until the live judge evaluates the final HF HEAD. The historical three-claim
 > conclusion below predates the six-claim challenge mapping.
 
 
